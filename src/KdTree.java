@@ -1,119 +1,82 @@
-import java.util.ArrayList;
-import java.util.List;
-import algs4.Point2D;
-import algs4.RectHV;
+import algs4.*;
 
 public class KdTree {
+    private static final boolean VERTICAL = true;
     private Node root;
     private int size;
 
     private static class Node {
-        private Point2D p;
-        private RectHV rect;
+        private final Point2D p;
+        private final boolean orientation;
         private Node lb;
         private Node rt;
-        private boolean isVertical;
 
-        public Node(Point2D p, RectHV rect, boolean isVertical) {
+        public Node(Point2D p, boolean orientation) {
             this.p = p;
-            this.rect = rect;
-            this.isVertical = isVertical;
+            this.orientation = orientation;
         }
     }
 
     public KdTree() {
-        root = null;
-        size = 0;
+        this.root = null;
+        this.size = 0;
     }
 
     public boolean isEmpty() {
-        return size == 0;
+        return this.size == 0;
     }
 
     public int size() {
-        return size;
+        return this.size;
     }
 
     public void insert(Point2D p) {
-        if (p == null) throw new IllegalArgumentException("calls insert() with a null key");
-        if (contains(p)) return;
-        root = insert(root, p, true, 0, 0, 1, 1);
+        if (p == null) throw new IllegalArgumentException("ponto nulo");
+        root = insert(root, p, VERTICAL);
     }
 
-    private Node insert(Node x, Point2D p, boolean isVertical, double xmin, double ymin, double xmax, double ymax) {
-        if (x == null) {
+    private Node insert(Node node, Point2D p, boolean orientation) {
+        if (node == null) {
             size++;
-            return new Node(p, new RectHV(xmin, ymin, xmax, ymax), isVertical);
+            return new Node(p, orientation);
         }
+        if (node.p.equals(p)) return node;
 
-        if (x.p.equals(p)) return x;
+        double cmp = (orientation == VERTICAL) ? (p.x() - node.p.x()) : (p.y() - node.p.y());
 
-        if (isVertical) {
-            if (p.x() < x.p.x()) {
-                x.lb = insert(x.lb, p, !isVertical, x.rect.xmin(), x.rect.ymin(), x.p.x(), x.rect.ymax());
-            } else {
-                x.rt = insert(x.rt, p, !isVertical, x.p.x(), x.rect.ymin(), x.rect.xmax(), x.rect.ymax());
-            }
+        if (cmp < 0) {
+            node.lb = insert(node.lb, p, !orientation);
         } else {
-            if (p.y() < x.p.y()) {
-                x.lb = insert(x.lb, p, !isVertical, x.rect.xmin(), x.rect.ymin(), x.rect.xmax(), x.p.y());
-            } else {
-                x.rt = insert(x.rt, p, !isVertical, x.rect.xmin(), x.p.y(), x.rect.xmax(), x.rect.ymax());
-            }
+            node.rt = insert(node.rt, p, !orientation);
         }
-        return x;
+        return node;
     }
-
-    public boolean contains(Point2D p) {
-        if (p == null) throw new IllegalArgumentException("argument to contains() is null");
-        return contains(root, p, true);
-    }
-
-    private boolean contains(Node x, Point2D p, boolean isVertical) {
-        if (x == null) return false;
-        if (x.p.equals(p)) return true;
-
-        if (isVertical) {
-            if (p.x() < x.p.x()) return contains(x.lb, p, !isVertical);
-            else return contains(x.rt, p, !isVertical);
-        } else {
-            if (p.y() < x.p.y()) return contains(x.lb, p, !isVertical);
-            else return contains(x.rt, p, !isVertical);
-        }
-    }
-
+    
     public Point2D nearest(Point2D p) {
-        if (p == null) throw new IllegalArgumentException("argument to nearest() is null");
+        if (p == null) throw new IllegalArgumentException("ponto nulo");
         if (isEmpty()) return null;
         return nearest(root, p, root.p);
     }
 
-    private Point2D nearest(Node x, Point2D p, Point2D champion) {
-        if (x == null) return champion;
+    private Point2D nearest(Node node, Point2D queryPoint, Point2D champion) {
+        if (node == null) return champion;
 
-        double distToChampion = champion.distanceSquaredTo(p);
-        if (x.rect.distanceSquaredTo(p) >= distToChampion) return champion;
-
-        if (x.p.distanceSquaredTo(p) < distToChampion) {
-            champion = x.p;
+        if (queryPoint.distanceSquaredTo(node.p) < queryPoint.distanceSquaredTo(champion)) {
+            champion = champion.distanceSquaredTo(queryPoint) < node.p.distanceSquaredTo(queryPoint) ? champion : node.p;
         }
 
-        if (x.isVertical) {
-            if (p.x() < x.p.x()) {
-                champion = nearest(x.lb, p, champion);
-                champion = nearest(x.rt, p, champion);
-            } else {
-                champion = nearest(x.rt, p, champion);
-                champion = nearest(x.lb, p, champion);
-            }
-        } else {
-            if (p.y() < x.p.y()) {
-                champion = nearest(x.lb, p, champion);
-                champion = nearest(x.rt, p, champion);
-            } else {
-                champion = nearest(x.rt, p, champion);
-                champion = nearest(x.lb, p, champion);
-            }
+        double cmp = (node.orientation == VERTICAL) ? (queryPoint.x() - node.p.x()) : (queryPoint.y() - node.p.y());
+        Node first = (cmp < 0) ? node.lb : node.rt;
+        Node second = (cmp < 0) ? node.rt : node.lb;
+
+        champion = nearest(first, queryPoint, champion);
+
+        double distToPartition = (node.orientation == VERTICAL)
+            ? (node.p.x() - queryPoint.x()) * (node.p.x() - queryPoint.x())
+            : (node.p.y() - queryPoint.y()) * (node.p.y() - queryPoint.y());
+
+        if (distToPartition < queryPoint.distanceSquaredTo(champion)) {
+            champion = nearest(second, queryPoint, champion);
         }
         return champion;
     }

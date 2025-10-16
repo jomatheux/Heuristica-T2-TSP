@@ -123,39 +123,50 @@ public class Tour {
     }
 
     public void insertNearestKd(Point p) {
-        // Converte o Point para Point2D para usar na KdTree
         Point2D p2d = new Point2D(p.x(), p.y());
 
-        // 1. Insere o novo ponto na Kd-Tree para que ele possa ser encontrado em buscas
-        // futuras
-        kdTree.insert(p2d);
-
-        // 2. Se o tour está vazio, trata como caso base (igual ao naive)
+        // Caso base: se o tour está vazio, apenas insere.
         if (start == null) {
             start = new Node();
             start.point = p;
             start.next = start;
             count = 1;
+            kdTree.insert(p2d); // Adiciona o primeiro ponto à árvore
             return;
         }
 
-        // 3. Usa a KdTree para encontrar o ponto no tour mais próximo do novo ponto 'p'
-        Point2D nearestPoint2D = kdTree.nearest(p2d);
-        Point nearestPoint = new Point(nearestPoint2D.x(), nearestPoint2D.y());
+        // 1. PRIMEIRO, encontra o ponto mais próximo que JÁ ESTÁ no tour.
+        Point2D nearestP2D = kdTree.nearest(p2d);
+        Point nearestPoint = new Point(nearestP2D.x(), nearestP2D.y());
 
-        // 4. Encontra o nó 'bestPrev' que precede o ponto mais próximo na lista
-        // encadeada
-        Node bestPrev = start;
-        while (!bestPrev.next.point.equals(nearestPoint)) {
-            bestPrev = bestPrev.next;
+        // 2. Encontra o nó do ponto mais próximo (nearestNode) e seu predecessor
+        // (prevNode).
+        Node prevNode = start;
+        while (!prevNode.next.point.equals(nearestPoint)) {
+            prevNode = prevNode.next;
         }
+        Node nearestNode = prevNode.next;
 
-        // 5. Insere o novo nó após 'bestPrev'
+        // 3. Calcula o custo de inserir 'p' ANTES vs DEPOIS do ponto mais próximo.
+        double costBefore = prevNode.point.distanceTo(p) + p.distanceTo(nearestNode.point)
+                - prevNode.point.distanceTo(nearestNode.point);
+        double costAfter = nearestNode.point.distanceTo(p) + p.distanceTo(nearestNode.next.point)
+                - nearestNode.point.distanceTo(nearestNode.next.point);
+
+        // 4. AGORA, insere o novo nó na lista encadeada na posição de menor custo.
         Node newNode = new Node();
         newNode.point = p;
-        newNode.next = bestPrev.next;
-        bestPrev.next = newNode;
+        if (costBefore < costAfter) {
+            newNode.next = nearestNode;
+            prevNode.next = newNode;
+        } else {
+            newNode.next = nearestNode.next;
+            nearestNode.next = newNode;
+        }
         count++;
+
+        // 5. POR FIM, adiciona o novo ponto na Kd-Tree para futuras buscas.
+        kdTree.insert(p2d);
     }
 
     // Método de teste (opcional)
