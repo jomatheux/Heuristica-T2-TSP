@@ -56,14 +56,14 @@ Q4. Realize a análise de tempo abaixo:
 
 | n      | Tempo (s) ingênuo | Tempo (s) com KdTree |
 | ------ | ----------------- | -------------------- |
-| 1000   |  0.054 segundos   |  0.03 segundos       |
-| 2000   |  0.265 segundos   |  0.101 segundos      |
-| 4000   |  0.859 segundos   |  0.364 segundos      |
-| 8000   |  3.392 segundos   |  1.287 segundos      |
-| 16000  |  14.896 segundos  |  5.353 segundos      |
-| 32000  |  55.2 segundos    |  20.877 segundos     |
-| 64000  |  233.708 segundos |  92.042 segundos     |
-| 128000 |  1015.581 segundos|                      |
-| 256000 |                   |                      |
-| 512000 |                   |                      |
-| 1024000|                   |                      |
+| 1000   |  0.054 segundos   |  0.013 segundos      |
+| 2000   |  0.265 segundos   |  0.025 segundos      |
+| 4000   |  0.859 segundos   |  0.043 segundos      |
+| 8000   |  3.392 segundos   |  0.103 segundos      |
+| 16000  |  14.896 segundos  |  0.239 segundos      |
+| 32000  |  55.2 segundos    |  0.519 segundos      |
+| 64000  |  233.708 segundos |  1.15 segundos       |
+| 128000 |  1015.581 segundos|  2.397 segundos      |
+| 256000 |                   |  5.221 segundos      |
+| 512000 |                   |  11.573 segundos     |
+| 1024000|                   |  24.545 segundos     |
