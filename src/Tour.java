@@ -1,18 +1,22 @@
 import algs4.Point2D;
 import algs4.StdDraw;
 import algs4.StdOut;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Tour {
 
     private static class Node {
         private Point point;
         private Node next;
+        private Node prev; // predecessor for O(1) access
     }
 
     private Node start;
     private int count;
     private final boolean useKdTree;
     private KdTree kdTree;
+    private Map<Point2D, Node> nodeMap;
 
     public Tour() {
         this(false);
@@ -24,6 +28,7 @@ public class Tour {
         this.count = 0;
         if (useKdTree) {
             this.kdTree = new KdTree();
+            this.nodeMap = new HashMap<>();
         }
     }
 
@@ -91,7 +96,12 @@ public class Tour {
             start = new Node();
             start.point = p;
             start.next = start;
+            start.prev = start;
             count = 1;
+            if (useKdTree && nodeMap != null) {
+                nodeMap.put(new Point2D(p.x(), p.y()), start);
+                kdTree.insert(new Point2D(p.x(), p.y()));
+            }
             return;
         }
 
@@ -117,9 +127,17 @@ public class Tour {
         // Insere o novo nó na melhor posição encontrada.
         Node newNode = new Node();
         newNode.point = p;
-        newNode.next = bestPrev.next;
+        Node succ = bestPrev.next;
+        newNode.next = succ;
+        newNode.prev = bestPrev;
         bestPrev.next = newNode;
+        succ.prev = newNode;
         count++;
+        if (useKdTree && nodeMap != null) {
+            Point2D p2d = new Point2D(p.x(), p.y());
+            kdTree.insert(p2d);
+            nodeMap.put(p2d, newNode);
+        }
     }
 
     public void insertNearestKd(Point p) {
@@ -130,22 +148,26 @@ public class Tour {
             start = new Node();
             start.point = p;
             start.next = start;
+            start.prev = start;
             count = 1;
             kdTree.insert(p2d); // Adiciona o primeiro ponto à árvore
+            if (nodeMap != null) nodeMap.put(p2d, start);
             return;
         }
-
         // 1. PRIMEIRO, encontra o ponto mais próximo que JÁ ESTÁ no tour.
         Point2D nearestP2D = kdTree.nearest(p2d);
-        Point nearestPoint = new Point(nearestP2D.x(), nearestP2D.y());
-
-        // 2. Encontra o nó do ponto mais próximo (nearestNode) e seu predecessor
-        // (prevNode).
-        Node prevNode = start;
-        while (!prevNode.next.point.equals(nearestPoint)) {
-            prevNode = prevNode.next;
+        Node nearestNode = (nodeMap != null) ? nodeMap.get(nearestP2D) : null;
+        if (nearestNode == null) {
+            Node cur = start;
+            do {
+                if (Double.compare(cur.point.x(), nearestP2D.x()) == 0 && Double.compare(cur.point.y(), nearestP2D.y()) == 0) {
+                    nearestNode = cur;
+                    break;
+                }
+                cur = cur.next;
+            } while (cur != start);
         }
-        Node nearestNode = prevNode.next;
+        Node prevNode = nearestNode.prev;
 
         // 3. Calcula o custo de inserir 'p' ANTES vs DEPOIS do ponto mais próximo.
         double costBefore = prevNode.point.distanceTo(p) + p.distanceTo(nearestNode.point)
@@ -158,18 +180,23 @@ public class Tour {
         newNode.point = p;
         if (costBefore < costAfter) {
             newNode.next = nearestNode;
+            newNode.prev = prevNode;
             prevNode.next = newNode;
+            nearestNode.prev = newNode;
         } else {
-            newNode.next = nearestNode.next;
+            Node nextNode = nearestNode.next;
+            newNode.next = nextNode;
+            newNode.prev = nearestNode;
             nearestNode.next = newNode;
+            nextNode.prev = newNode;
         }
         count++;
 
-        // 5. POR FIM, adiciona o novo ponto na Kd-Tree para futuras buscas.
+        // 5. POR FIM, adiciona o novo ponto na Kd-Tree e no mapa para futuras buscas.
         kdTree.insert(p2d);
+        if (nodeMap != null) nodeMap.put(p2d, newNode);
     }
 
-    // Método de teste (opcional)
     public static void main(String[] args) {
         Tour tour = new Tour();
         tour.insertNearest(new Point(1.0, 1.0));

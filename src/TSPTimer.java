@@ -28,7 +28,7 @@
         // gerar dados e executar a heurística de inserção pelo vizinho mais próximo
         StdRandom.setSeed(123456789L);
         Stopwatch timer1 = new Stopwatch();
-        Tour tour1 = new Tour(true);
+        Tour tour1 = new Tour();
         for (int i = 0; i < n; i++) {
             double x = StdRandom.uniformDouble(lo, hi);
             double y = StdRandom.uniformDouble(lo, hi);
