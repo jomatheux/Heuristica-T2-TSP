@@ -1,0 +1,69 @@
+*****************************************************************************************************
+T290 - Resolução de Problemas com Grafos
+Orientador: Prof. Me Ricardo Carubbi
+*****************************************************************************************************
+
+Trabalho: Problema do Caixeiro Viajante
+
+Informe abaixo o(s) nome(s):
+- Aluno(a) 1: João Matheus Ferreira Magalhães
+- Aluno(a) 2: ______________________________
+
+Q1. Explique como você implementou a heurística de inserção pelo vizinho mais próximo.
+Comente também como você atualiza as ligações da lista encadeada circular após inserir o novo ponto.
+
+Resposta:
+A heurística de inserção pelo vizinho mais próximo foi implementada no método `insertNearestNaive(Point p)` da classe `Tour`. A lógica principal é a seguinte:
+
+1.  **Caso Base:** Se o tour estiver vazio (`start == null`), o novo ponto `p` se torna o primeiro e único nó. Este nó aponta para si mesmo, formando uma lista circular com um único elemento.
+
+2.  **Encontrar o Melhor Local de Inserção:** Se o tour já contém pontos, o método itera por todos os nós existentes na lista encadeada circular. Para cada aresta `(A, B)` no tour (onde `A` é `current.point` e `B` é `current.next.point`), ele calcula o custo de inserir o novo ponto `p` entre `A` e `B`.
+
+3.  **Cálculo do Custo:** O custo de inserção é a diferença entre a nova distância (distância de A a p + distância de p a B) e a distância original da aresta (distância de A a B). A fórmula é: `aumento = dist(A, p) + dist(p, B) - dist(A, B)`.
+
+4.  **Seleção da Melhor Aresta:** O algoritmo mantém um registro da aresta que resulta no menor aumento de comprimento do tour (`minIncrease`). A aresta que minimizar esse aumento é escolhida como o local ideal para a inserção.
+
+5.  **Atualização da Lista:** Uma vez que o melhor nó predecessor (`bestPrev`) é encontrado, um novo nó contendo o ponto `p` é criado. A ligação é atualizada da seguinte forma: o `next` do `bestPrev` (que antes apontava para o nó seguinte no tour) passa a apontar para o novo nó. O `next` do novo nó, por sua vez, é configurado para apontar para o antigo sucessor de `bestPrev`. Assim, o novo ponto é inserido na lista, mantendo a estrutura circular.
+
+
+Q2. Explique por que é melhor usar uma lista encadeada circular em vez de um vetor.
+Considere a complexidade das operações de inserção e remoção de pontos.
+
+Resposta:
+O uso de uma lista encadeada circular é mais vantajoso do que um vetor para este problema, principalmente devido à complexidade das operações de inserção:
+
+1.  **Complexidade da Inserção:**
+    * **Vetor (ou ArrayList):** Inserir um elemento no meio de um vetor é uma operação de complexidade **O(n)**. Isso ocorre porque, após encontrar a posição de inserção, todos os elementos subsequentes precisam ser deslocados uma posição para a direita para abrir espaço para o novo ponto. Em um tour com `n` pontos, essa operação se torna muito custosa.
+    * **Lista Encadeada Circular:** Em uma lista encadeada, a inserção de um elemento é uma operação de complexidade **O(1)**, desde que se tenha uma referência ao nó anterior ao ponto de inserção. A operação consiste apenas em atualizar dois ponteiros: o do nó anterior para apontar para o novo nó, e o do novo nó para apontar para o próximo. Não há necessidade de deslocar outros elementos.
+
+2.  **Flexibilidade da Estrutura:** A lista encadeada circular representa naturalmente a estrutura de um ciclo (tour), onde o último ponto se conecta ao primeiro. Isso simplifica a lógica de percorrer o tour e calcular seu comprimento total, pois não há tratamento especial para o "final" da lista.
+
+
+Q3. Preencha os comprimentos calculados pela heurística do vizinho mais próximo.
+
+| Arquivo de dados | Vizinho mais próximo |
+| ---------------- | -------------------- |
+| tsp10.txt        |    1655.7462         |
+| tsp100.txt       |    4887.2190         |
+| tsp1000.txt      |    17265.6282        |
+| usa13509.txt     |    45074.7769        |
+
+Q4. Realize a análise de tempo abaixo:
+
+- Estime o tempo de execução (em segundos) da heurística.
+- Execute a heurística para \(n = 1000\) e dobre \(n\) repetidamente até que o tempo de execução ultrapasse 60 segundos.
+- Utilize o **TSPTimer** com a opção **-Xint** para desativar otimizações do compilador.
+
+| n      | Tempo (s) ingênuo | Tempo (s) com KdTree |
+| ------ | ----------------- | -------------------- |
+| 1000   |  0.054 segundos   |  0.071 segundos      |
+| 2000   |  0.265 segundos   |  0.187 segundos      |
+| 4000   |  0.859 segundos   |  0.821 segundos      |
+| 8000   |  3.392 segundos   |  3.076 segundos      |
+| 16000  |  14.896 segundos  |  12.471 segundos     |
+| 32000  |  55.2 segundos    |  49.724 segundos     |
+| 64000  |  233.708 segundos |                      |
+| 128000 |  1015.581 segundos|                      |
+| 256000 |                   |                      |
+| 512000 |                   |                      |
+| 1024000|                   |                      |
